@@ -6,37 +6,20 @@ import mediapipe as mp
 import matplotlib.pyplot as plt
 import cv2
 mp_face_mesh = mp.solutions.face_mesh
- 
-# Setup the face landmarks function for images.
 face_mesh_images = mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=2,
                                          min_detection_confidence=0.5)
- 
-# Setup the face landmarks function for videos.
 face_mesh_videos = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, 
                                          min_detection_confidence=0.5,min_tracking_confidence=0.3)
- 
-# Initialize the mediapipe drawing styles class.
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_detection = mp.solutions.face_detection
- 
-# Setup the face detection function.
 face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
- 
-# Initialize the mediapipe drawing class.
 mp_drawing = mp.solutions.drawing_utils
 
 # Initialize the VideoCapture object to read from the webcam.
 def detectFacialLandmarks(image, face_mesh, display = True):
     '''
     This function performs facial landmarks detection on an image.
-    Args:
-        image:     The input image of person(s) whose facial landmarks needs to be detected.
-        face_mesh: The face landmarks detection function required to perform the landmarks detection.
-        display:   A boolean value that is if set to true the function displays the original input image, 
-                   and the output image with the face landmarks drawn and returns nothing.
-    Returns:
-        output_image: A copy of input image with face landmarks drawn.
-        results:      The output of the facial landmarks detection on the input image.
+    
     '''
     
     # Perform the facial landmarks detection on the image, after converting it into RGB format.
@@ -82,17 +65,6 @@ def isOpen(image, face_mesh_results, face_part, threshold=5, display=True):
     '''
     This function checks whether the an eye or mouth of the person(s) is open, 
     utilizing its facial landmarks.
-    Args:
-        image:             The image of person(s) whose an eye or mouth is to be checked.
-        face_mesh_results: The output of the facial landmarks detection on the image.
-        face_part:         The name of the face part that is required to check.
-        threshold:         The threshold value used to check the isOpen condition.
-        display:           A boolean value that is if set to true the function displays 
-                           the output image and returns nothing.
-    Returns:
-        output_image: The image of the person with the face part is opened  or not status written.
-        status:       A dictionary containing isOpen statuses of the face part of all the 
-                      detected faces.  
     '''
     
     # Retrieve the height and width of the image.
@@ -192,15 +164,6 @@ def isOpen(image, face_mesh_results, face_part, threshold=5, display=True):
 def getSize(image, face_landmarks, INDEXES):
     '''
     This function calculate the height and width of a face part utilizing its landmarks.
-    Args:
-        image:          The image of person(s) whose face part size is to be calculated.
-        face_landmarks: The detected face landmarks of the person whose face part size is to 
-                        be calculated.
-        INDEXES:        The indexes of the face part landmarks, whose size is to be calculated.
-    Returns:
-        width:     The calculated width of the face part of the face whose landmarks were passed.
-        height:    The calculated height of the face part of the face whose landmarks were passed.
-        landmarks: An array of landmarks of the face part whose size is calculated.
     '''
     
     # Retrieve the height and width of the image.
@@ -230,16 +193,6 @@ def getSize(image, face_landmarks, INDEXES):
 def overlay(image, filter_img, face_landmarks, face_part, INDEXES, display=True):
     '''
     This function will overlay a filter image over a face part of a person in the image/frame.
-    Args:
-        image:          The image of a person on which the filter image will be overlayed.
-        filter_img:     The filter image that is needed to be overlayed on the image of the person.
-        face_landmarks: The facial landmarks of the person in the image.
-        face_part:      The name of the face part on which the filter image will be overlayed.
-        INDEXES:        The indexes of landmarks of the face part.
-        display:        A boolean value that is if set to true the function displays 
-                        the annotated image and returns nothing.
-    Returns:
-        annotated_image: The image with the overlayed filter on the top of the specified face part.
     '''
     
     # Create a copy of the image to overlay filter image on.
@@ -308,58 +261,33 @@ def overlay(image, filter_img, face_landmarks, face_part, INDEXES, display=True)
     
     # Check if the annotated image is specified to be displayed.
     if display:
- 
-        # Display the annotated image.
         plt.figure(figsize=[10,10])
         plt.imshow(annotated_image[:,:,::-1]);plt.title("Output Image");plt.axis('off');
     
-    # Otherwise
     else:
-            
-        # Return the annotated image.
         return annotated_image
+
 camera_video = cv2.VideoCapture(0)
-camera_video.set(3,1280)
-camera_video.set(4,960)
  
 # Create named window for resizing purposes.
-cv2.namedWindow('Face Filter', cv2.WINDOW_NORMAL)
- 
-# # Read the left and right eyes images.
-# right_eye = cv2.imread('/home/digital/AI-ML/gaze_correction/right-eye.jpeg')
-# left_eye = cv2.imread('/home/digital/AI-ML/gaze_correction/left-eye.jpeg')
- 
-# Initialize the VideoCapture object to read from the smoke animation video stored in the disk.
-# smoke_animation = cv2.VideoCapture('media/smoke_animation.mp4')
+cv2.namedWindow('Replaced EyeMotion', cv2.WINDOW_NORMAL)
+
 lefteye_animation = cv2.VideoCapture('gaze-correction/ezgif-4-1d0457a163.mp4')
- 
-# Set the smoke animation video frame counter to zero.
-# smoke_frame_counter = 0
 lefteye_frame_counter = 0
 # Iterate until the webcam is accessed successfully.
 while camera_video.isOpened():
-    
-    # Read a frame.
     ok, frame = camera_video.read()
-    
-    # Check if frame is not read properly then continue to the next iteration to read
-    # the next frame.
     if not ok:
         continue
         
-
     _, lefteye_frame = lefteye_animation.read()
-    
-    # Increment the smoke animation video frame counter.
+    # Increment the  video frame counter.
     lefteye_frame_counter += 1
     
-    # Check if the current frame is the last frame of the smoke animation video.
+    # Check if the current frame is the last frame of the eye video.
     if lefteye_frame_counter == lefteye_animation.get(cv2.CAP_PROP_FRAME_COUNT):     
-        
         # Set the current frame position to first frame to restart the video.
         lefteye_animation.set(cv2.CAP_PROP_POS_FRAMES, 0)
-        
-        # Set the smoke animation video frame counter to zero.
         lefteye_frame_counter = 0
     
     # Flip the frame horizontally for natural (selfie-view) visualization.
@@ -367,12 +295,7 @@ while camera_video.isOpened():
     # Perform Face landmarks detection.
     _, face_mesh_results = detectFacialLandmarks(frame, face_mesh_videos, display=False)
     
-    # Check if facial landmarks are found.
     if face_mesh_results.multi_face_landmarks:
-        
-        # Get the mouth isOpen status of the person in the frame.
-        _, mouth_status = isOpen(frame, face_mesh_results, 'MOUTH', 
-                                     threshold=15, display=False)
         
         # Get the left eye isOpen status of the person in the frame.
         _, left_eye_status = isOpen(frame, face_mesh_results, 'LEFT EYE', 
@@ -384,27 +307,12 @@ while camera_video.isOpened():
         
         # Iterate over the found faces.
         for face_num, face_landmarks in enumerate(face_mesh_results.multi_face_landmarks):
-            
-            # Check if the left eye of the face is open.
-            # if left_eye_status[face_num] == 'OPEN':
-                
-            #     # Overlay the left eye image on the frame at the appropriate location.
-            #     frame = overlay(frame, left_eye, face_landmarks,
-            #                     'LEFT EYE', mp_face_mesh.FACEMESH_LEFT_EYE, display=False)
-            
-            # Check if the right eye of the face is open.
             if right_eye_status[face_num] == 'OPEN':
                 
                 # Overlay the right eye image on the frame at the appropriate location.
                 frame = overlay(frame, lefteye_frame, face_landmarks,
                                 'RIGHT EYE', mp_face_mesh.FACEMESH_RIGHT_EYE, display=False)
             
-            # Check if the mouth of the face is open.
-            # if mouth_status[face_num] == 'OPEN':
-                
-            #     # Overlay the smoke animation on the frame at the appropriate location.
-            #     frame = overlay(frame, smoke_frame, face_landmarks, 
-            #                     'MOUTH', mp_face_mesh.FACEMESH_LIPS, display=False)
             if left_eye_status[face_num] == 'OPEN':
                 
                 # Overlay the smoke animation on the frame at the appropriate location.
