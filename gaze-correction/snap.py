@@ -18,13 +18,10 @@ mp_drawing = mp.solutions.drawing_utils
 # Initialize the VideoCapture object to read from the webcam.
 def detectFacialLandmarks(image, face_mesh, display = True):
     '''
-    This function performs facial landmarks detection on an image.
-    
+    This function performs facial landmarks detection on an image
     '''
     # Perform the facial landmarks detection on the image, after converting it into RGB format.
     results = face_mesh.process(image[:,:,::-1])
-    
-    # Create a copy of the input image to draw facial landmarks.
     output_image = image[:,:,::-1].copy()
     
     # Check if facial landmarks in the image are found.
@@ -32,7 +29,7 @@ def detectFacialLandmarks(image, face_mesh, display = True):
  
         # Iterate over the found faces.
         for face_landmarks in results.multi_face_landmarks:
- 
+
             # Draw the facial landmarks on the output image with the face mesh tesselation
             # connections using default face mesh tesselation style.
             mp_drawing.draw_landmarks(image=output_image, landmark_list=face_landmarks,
@@ -52,29 +49,19 @@ def detectFacialLandmarks(image, face_mesh, display = True):
         # Return the output image in BGR format and results of facial landmarks detection.
         return np.ascontiguousarray(output_image[:,:,::-1], dtype=np.uint8), results   
 
-def isOpen(image, face_mesh_results, face_part, threshold=5, display=True):
+def status(image, face_mesh_results, face_part, threshold=0, display=True):
     '''
     This function checks whether the an eye or mouth of the person(s) is open, 
     utilizing its facial landmarks.
     '''
     image_height, image_width, _ = image.shape
-    
-   
-    # Create a dictionary to store the isOpen status of the face part of all the detected faces.
+    # Create a dictionary to store the status status of the face part of all the detected faces.
     status={}
     # Check if the face part is right eye.    
     if face_part == 'RIGHT EYE':
         INDEXES = mp_face_mesh.FACEMESH_RIGHT_EYE 
     elif face_part == 'LEFT EYE' :
         INDEXES = mp_face_mesh.FACEMESH_LEFT_EYE   
-    #     # # Specify the location to write the is right eye open status.
-    #     # loc = (image_width-300, 30)
-        
-    #     # Initialize a increment that will be added to the status writing location, 
-    #     # so that the statuses of two faces donot overlap.
-    #     # increment=30
-    
-    # # Otherwise return nothing.
     else:
         return
     
@@ -89,18 +76,11 @@ def isOpen(image, face_mesh_results, face_part, threshold=5, display=True):
         
         # Check if the face part is open.
         if (height/face_height)*100 > threshold:
-            
-            # Set status of the face part to open.
             status[face_no] = 'OPEN'
-            
-            # Set color which will be used to write the status to green.
-            color=(0,255,0)
-        
-        # Otherwise.
         else:
             # Set status of the face part to close.
             status[face_no] = 'CLOSE'
-        # Return the output image and the isOpen statuses of the face part of each detected face.
+        # Return the output image and the status statuses of the face part of each detected face.
         return status
 
 def getSize(image, face_landmarks, INDEXES):
@@ -137,35 +117,21 @@ def overlay(image, filter_img, face_landmarks, face_part, INDEXES, display=True)
                                            25, 255, cv2.THRESH_BINARY_INV)
  
         center = landmarks.mean(axis=0).astype("int")
-        # Calculate the location where the eye filter image will be placed.  
         location = (int(center[0]-filter_img_width/2), int(center[1]-filter_img_height/2))
- 
-        # Retrieve the region of interest from the image where the filter image will be placed.
         ROI = image[location[1]: location[1] + filter_img_height,
                     location[0]: location[0] + filter_img_width]
- 
-        # Perform Bitwise-AND operation. This will set the pixel values of the region where,
-        # filter image will be placed to zero.
         resultant_image = cv2.bitwise_and(ROI, ROI, mask=filter_img_mask)
- 
-        # Add the resultant image and the resized filter image.
-        # This will update the pixel values of the resultant image at the indexes where 
-        # pixel values are zero, to the pixel values of the filter image.
         resultant_image = cv2.add(resultant_image, resized_filter_img)
- 
-        # Update the image's region of interest with resultant image.
         annotated_image[location[1]: location[1] + filter_img_height,
                         location[0]: location[0] + filter_img_width] = resultant_image
             
     # Catch and handle the error(s).
     except Exception as e:
         pass
-    
     # Check if the annotated image is specified to be displayed.
     if display:
         plt.figure(figsize=[10,10])
         plt.imshow(annotated_image[:,:,::-1]);plt.title("Output Image");plt.axis('off');
-    
     else:
         return annotated_image
 
@@ -195,30 +161,19 @@ while camera_video.isOpened():
     _, face_mesh_results = detectFacialLandmarks(frame, face_mesh_videos, display=False)
     
     if face_mesh_results.multi_face_landmarks:
-        
-        # Get the left eye isOpen status of the person in the frame.
-        left_eye_status = isOpen(frame, face_mesh_results, 'LEFT EYE', 
-                                        threshold=4.5 , display=False)
-        
-        # Get the right eye isOpen status of the person in the frame.
-        right_eye_status = isOpen(frame, face_mesh_results, 'RIGHT EYE', 
-                                         threshold=4.5, display=False)
-        
-        # Iterate over the found faces.
+        left_eye_status = status(frame, face_mesh_results, 'LEFT EYE', 
+                                        threshold=0 , display=False)
+        right_eye_status = status(frame, face_mesh_results, 'RIGHT EYE', 
+                                         threshold=0, display=False)
         for face_num, face_landmarks in enumerate(face_mesh_results.multi_face_landmarks):
             if right_eye_status[face_num] == 'OPEN':
-                # Overlay the right eye image on the frame at the appropriate location.
-                frame = overlay(frame, lefteye_frame, face_landmarks,
-                                'RIGHT EYE', mp_face_mesh.FACEMESH_RIGHT_EYE, display=False)
+                frame = overlay(frame, lefteye_frame, face_landmarks,'RIGHT EYE', mp_face_mesh.FACEMESH_RIGHT_EYE, display=False)
             
             if left_eye_status[face_num] == 'OPEN':
-                frame = overlay(frame, lefteye_frame, face_landmarks, 
-                                'LEFT_EYE', mp_face_mesh.FACEMESH_LEFT_EYE, display=False)
-
-    # Display the frame.
+                frame = overlay(frame, lefteye_frame, face_landmarks,'LEFT_EYE', mp_face_mesh.FACEMESH_LEFT_EYE, display=False)
+            print(face_num)        
     cv2.imshow('Face Filter', frame)
     if cv2.waitKey(10) == 27:
-        break
-             
+        break             
 camera_video.release()
 cv2.destroyAllWindows()
