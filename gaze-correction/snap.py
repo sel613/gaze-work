@@ -131,11 +131,7 @@ def overlay(image, filter_img, face_landmarks, face_part, INDEXES, display=True)
     except Exception as e:
         pass
     # Check if the annotated image is specified to be displayed.
-    if display:
-        plt.figure(figsize=[10,10])
-        plt.imshow(annotated_image[:,:,::-1]);plt.title("Output Image");plt.axis('off');
-    else:
-        return annotated_image
+    return annotated_image
 
 camera_video = cv2.VideoCapture(0)
  
