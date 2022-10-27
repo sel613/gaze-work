@@ -169,7 +169,7 @@ while camera_video.isOpened():
             
             if left_eye_status[face_num] == 'OPEN':
                 frame = overlay(frame, lefteye_frame, face_landmarks,'LEFT_EYE', mp_face_mesh.FACEMESH_LEFT_EYE, display=False)
-            print(face_num)        
+            # print(face_num)        
     cv2.imshow('Face Filter', frame)
     if cv2.waitKey(10) == 27:
         break             
